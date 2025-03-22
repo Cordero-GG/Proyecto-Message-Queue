@@ -9,9 +9,16 @@ namespace MQBroker
     {
         static void Main(string[] args)
         {
-            // Configurar el servidor
-            string ip = "127.0.0.1"; // IP local
-            int port = 5000; // Puerto
+            // Verificar si se proporcionaron argumentos (IP y puerto)
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Uso: MQBroker <IP> <Puerto>");
+                return;
+            }
+
+            // Obtener la IP y el puerto de los argumentos
+            string ip = args[0];
+            int port = int.Parse(args[1]);
 
             // Crear una instancia del MQBroker
             MQBroker broker = new MQBroker();
