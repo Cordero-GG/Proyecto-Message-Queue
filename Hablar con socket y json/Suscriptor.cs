@@ -4,11 +4,31 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Hablar_con_socket_y_json
+namespace MQBroker
 {
     public class Suscriptor
     {
-        public string Nombre { get; set; }
-        public ManualQueue<Message> Mensajes { get; set; } = new ManualQueue<Message>();
+        public Guid AppID { get; }
+        private MiCola<string> colaMensajes;
+
+        public Suscriptor(Guid appID)
+        {
+            AppID = appID;
+            colaMensajes = new MiCola<string>();
+        }
+
+        public void EncolarMensaje(string mensaje)
+        {
+            colaMensajes.Enqueue(mensaje);
+        }
+
+        public string DesencolarMensaje()
+        {
+            if (colaMensajes.Count > 0)
+            {
+                return colaMensajes.Dequeue();
+            }
+            return null;
+        }
     }
 }
