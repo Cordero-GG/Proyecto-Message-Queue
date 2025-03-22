@@ -77,7 +77,7 @@ namespace MQBroker
             }
         }
 
-        public string Receive(Guid appID, string tema)
+        public string? Receive(Guid appID, string tema)
         {
             // Buscar el tema
             Tema t = BuscarTema(tema);
@@ -103,7 +103,7 @@ namespace MQBroker
             }
         }
 
-        private Tema BuscarTema(string nombre)
+        private Tema? BuscarTema(string nombre)
         {
             // Buscar un tema por nombre
             for (int i = 0; i < temas.Count; i++)

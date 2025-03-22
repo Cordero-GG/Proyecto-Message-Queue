@@ -22,7 +22,7 @@ namespace MQBroker
             colaMensajes.Enqueue(mensaje);
         }
 
-        public string DesencolarMensaje()
+        public string? DesencolarMensaje()
         {
             if (colaMensajes.Count > 0)
             {

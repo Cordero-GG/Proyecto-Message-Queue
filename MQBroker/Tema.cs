@@ -50,7 +50,7 @@ namespace MQBroker
             }
         }
 
-        public string ObtenerMensaje(Guid appID)
+        public string? ObtenerMensaje(Guid appID)
         {
             for (int i = 0; i < suscriptores.Count; i++)
             {
