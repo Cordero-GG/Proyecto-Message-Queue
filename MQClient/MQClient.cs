@@ -20,7 +20,18 @@ namespace MQClient
         public MessageQueueClient(string ip, int port, Guid appID)
         {
             AppID = appID;
+            _tcpClient = new TcpClient(); // Initialize _tcpClient
             Connect(ip, port);
+            if (_tcpClient.Connected)
+            {
+                NetworkStream stream = _tcpClient.GetStream();
+                _reader = new StreamReader(stream, Encoding.UTF8);
+                _writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+            }
+            else
+            {
+                throw new InvalidOperationException("No se pudo conectar al servidor");
+            }
         }
 
         public bool IsConnected()

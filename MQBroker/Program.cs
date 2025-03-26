@@ -23,11 +23,14 @@ namespace MQBroker
             try
             {
                 TcpListener server = new TcpListener(IPAddress.Parse(ip), port);
+                Console.WriteLine($"Intentando iniciar servidor en {ip}:{port}...");
                 server.Start();
-                Console.WriteLine($"Servidor MQBroker iniciado en {ip}:{port}...");
+                Console.WriteLine($"Servidor MQBroker iniciado correctamente en {ip}:{port}...");
+                Console.WriteLine($"Endpoint local: {server.LocalEndpoint}");
 
                 while (true)
                 {
+                    Console.WriteLine("Esperando conexiones...");
                     TcpClient client = await server.AcceptTcpClientAsync();
                     Console.WriteLine("Cliente conectado.");
                     _ = Task.Run(() => ManejarCliente(broker, client));
@@ -36,6 +39,7 @@ namespace MQBroker
             catch (Exception ex)
             {
                 Console.WriteLine($"Error al iniciar el servidor: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
             }
         }
 
