@@ -44,6 +44,12 @@ namespace MQClientTest
 
             Console.WriteLine("Prueba completada. Presiona cualquier tecla para salir...");
             Console.ReadKey();
+
+            // Al final del método Main
+            client.CerrarConexion();
+            Console.WriteLine("Prueba completada. Presiona cualquier tecla para salir...");
+            Console.ReadKey();
+
         }
     }
 }
