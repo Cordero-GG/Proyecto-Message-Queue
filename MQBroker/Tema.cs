@@ -1,42 +1,37 @@
-﻿using System.Collections.Generic;
-
-namespace MQBroker
+﻿namespace MQBroker
 {
     public class Tema
     {
         public string Nombre { get; }
-        private MiLista<Suscriptor> suscriptores;
+        private readonly MiLista<Suscriptor> _suscriptores = new MiLista<Suscriptor>();
 
         public Tema(string nombre)
         {
             Nombre = nombre;
-            suscriptores = new MiLista<Suscriptor>();
         }
 
-        public bool ContieneSuscriptor(Guid appID)
+        public bool ContieneSuscriptor(Guid appId)
         {
-            for (int i = 0; i < suscriptores.Count; i++)
+            for (int i = 0; i < _suscriptores.Count; i++)
             {
-                if (suscriptores.Obtener(i).AppID == appID)
-                {
+                if (_suscriptores.Obtener(i).AppID == appId)
                     return true;
-                }
             }
             return false;
         }
 
         public void AgregarSuscriptor(Suscriptor suscriptor)
         {
-            suscriptores.Agregar(suscriptor);
+            _suscriptores.Agregar(suscriptor);
         }
 
-        public void EliminarSuscriptor(Guid appID)
+        public void EliminarSuscriptor(Guid appId)
         {
-            for (int i = 0; i < suscriptores.Count; i++)
+            for (int i = 0; i < _suscriptores.Count; i++)
             {
-                if (suscriptores.Obtener(i).AppID == appID)
+                if (_suscriptores.Obtener(i).AppID == appId)
                 {
-                    suscriptores.Eliminar(i);
+                    _suscriptores.Eliminar(i);
                     break;
                 }
             }
@@ -44,22 +39,22 @@ namespace MQBroker
 
         public void PublicarMensaje(string contenido)
         {
-            for (int i = 0; i < suscriptores.Count; i++)
+            for (int i = 0; i < _suscriptores.Count; i++)
             {
-                suscriptores.Obtener(i).EncolarMensaje(contenido);
+                _suscriptores.Obtener(i).EncolarMensaje(contenido);
             }
         }
 
-        public string? ObtenerMensaje(Guid appID)
+        public string ObtenerMensaje(Guid appId)
         {
-            for (int i = 0; i < suscriptores.Count; i++)
+            for (int i = 0; i < _suscriptores.Count; i++)
             {
-                if (suscriptores.Obtener(i).AppID == appID)
+                if (_suscriptores.Obtener(i).AppID == appId)
                 {
-                    return suscriptores.Obtener(i).DesencolarMensaje();
+                    return _suscriptores.Obtener(i).DesencolarMensaje() ?? "ERROR|No hay mensajes";
                 }
             }
-            return null;
+            return "ERROR|No suscrito al tema";
         }
     }
 }

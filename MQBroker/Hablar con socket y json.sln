@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MQClient", "..\MQClient\MQC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MQClientTest", "..\MQClientTest\MQClientTest.csproj", "{DD1B97DB-C184-4FF2-9DAD-B56BB87A1DA0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interfaz_gráfica", "..\Interfaz_gráfica\Interfaz_gráfica.csproj", "{3AC17324-3788-4DF4-BC68-860DF51AC7C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{DD1B97DB-C184-4FF2-9DAD-B56BB87A1DA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DD1B97DB-C184-4FF2-9DAD-B56BB87A1DA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DD1B97DB-C184-4FF2-9DAD-B56BB87A1DA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3AC17324-3788-4DF4-BC68-860DF51AC7C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AC17324-3788-4DF4-BC68-860DF51AC7C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3AC17324-3788-4DF4-BC68-860DF51AC7C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3AC17324-3788-4DF4-BC68-860DF51AC7C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -2,110 +2,101 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MQBroker
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            // Verificar si se proporcionaron argumentos (IP y puerto)
             if (args.Length < 2)
             {
                 Console.WriteLine("Uso: MQBroker <IP> <Puerto>");
                 return;
             }
 
-            // Obtener la IP y el puerto de los argumentos
             string ip = args[0];
             int port = int.Parse(args[1]);
-
-            // Crear una instancia del MQBroker
             MQBroker broker = new MQBroker();
 
-            // Iniciar el servidor para escuchar peticiones
-            TcpListener server = new TcpListener(IPAddress.Parse(ip), port);
-            server.Start();
-            Console.WriteLine($"Servidor MQBroker iniciado en {ip}:{port}...");
-
-            while (true)
-            {
-                // Esperar una conexión de un cliente
-                TcpClient client = server.AcceptTcpClient();
-                Console.WriteLine("Cliente conectado.");
-
-                // Manejar la petición del cliente en un hilo separado
-                ManejarCliente(broker, client);
-            }
-        }
-
-        static void ManejarCliente(MQBroker broker, TcpClient client)
-        {
             try
             {
-                // Obtener el stream de red para leer y escribir datos
-                NetworkStream stream = client.GetStream();
+                TcpListener server = new TcpListener(IPAddress.Parse(ip), port);
+                server.Start();
+                Console.WriteLine($"Servidor MQBroker iniciado en {ip}:{port}...");
 
-                // Leer los datos enviados por el cliente
-                byte[] buffer = new byte[1024];
-                int bytesRead = stream.Read(buffer, 0, buffer.Length);
-                string peticion = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                Console.WriteLine($"Petición recibida: {peticion}");
-
-                // Interpretar la petición
-                string[] partes = peticion.Split('|');
-                string comando = partes[0];
-
-                switch (comando)
+                while (true)
                 {
-                    case "Subscribe":
-                        {
-                            Guid appID = Guid.Parse(partes[1]);
-                            string tema = partes[2];
-                            broker.Subscribe(appID, tema);
-                            break;
-                        }
-                    case "Unsubscribe":
-                        {
-                            Guid appID = Guid.Parse(partes[1]);
-                            string tema = partes[2];
-                            broker.Unsubscribe(appID, tema);
-                            break;
-                        }
-                    case "Publish":
-                        {
-                            string tema = partes[1];
-                            string contenido = partes[2];
-                            broker.Publish(tema, contenido);
-                            break;
-                        }
-                    case "Receive":
-                        {
-                            Guid appID = Guid.Parse(partes[1]);
-                            string tema = partes[2];
-                            string mensaje = broker.Receive(appID, tema);
-                            if (mensaje != null)
-                            {
-                                // Enviar el mensaje de vuelta al cliente
-                                byte[] respuesta = Encoding.UTF8.GetBytes(mensaje);
-                                stream.Write(respuesta, 0, respuesta.Length);
-                            }
-                            break;
-                        }
-                    default:
-                        Console.WriteLine($"Comando no reconocido: {comando}");
-                        break;
+                    TcpClient client = await server.AcceptTcpClientAsync();
+                    Console.WriteLine("Cliente conectado.");
+                    _ = Task.Run(() => ManejarCliente(broker, client));
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al manejar la petición del cliente: {ex.Message}");
+                Console.WriteLine($"Error al iniciar el servidor: {ex.Message}");
+            }
+        }
+
+        static async Task ManejarCliente(MQBroker broker, TcpClient client)
+        {
+            try
+            {
+                using (NetworkStream stream = client.GetStream())
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                using (StreamWriter writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true })
+                {
+                    while (client.Connected)
+                    {
+                        string peticion = await reader.ReadLineAsync();
+                        if (string.IsNullOrEmpty(peticion)) break;
+
+                        Console.WriteLine($"Petición recibida: {peticion}");
+                        string respuesta = ProcesarPeticion(broker, peticion);
+
+                        await writer.WriteLineAsync(respuesta);
+                        Console.WriteLine($"Respuesta enviada: {respuesta}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al manejar el cliente: {ex.Message}");
             }
             finally
             {
-                // Cerrar la conexión con el cliente
                 client.Close();
                 Console.WriteLine("Cliente desconectado.");
+            }
+        }
+
+        static string ProcesarPeticion(MQBroker broker, string peticion)
+        {
+            try
+            {
+                string[] partes = peticion.Split('|');
+                switch (partes[0])
+                {
+                    case "Subscribe":
+                        broker.Subscribe(Guid.Parse(partes[1]), partes[2]);
+                        return "OK|Subscribed";
+                    case "Unsubscribe":
+                        broker.Unsubscribe(Guid.Parse(partes[1]), partes[2]);
+                        return "OK|Unsubscribed";
+                    case "Publish":
+                        broker.Publish(partes[1], partes[2]);
+                        return "OK|Published";
+                    case "Receive":
+                        string mensaje = broker.Receive(Guid.Parse(partes[1]), partes[2]);
+                        return $"OK|{mensaje}";
+                    default:
+                        return "ERROR|Comando inválido";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"ERROR|{ex.Message}";
             }
         }
     }

@@ -1,124 +1,104 @@
-﻿using System;
+﻿// MQClient.cs - Versión corregida
+using System;
+using System.IO;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 
 namespace MQClient
 {
-    public class MQClient
+    public class MessageQueueClient : IDisposable
     {
-        private string ip;
-        private int port;
-        private Guid appID;
+        private TcpClient _tcpClient;
+        private StreamReader _reader;
+        private StreamWriter _writer;
+        private readonly object _lock = new();
+        private bool _disposed = false;
+        public Guid AppID { get; } // Añadido para almacenar el AppID
 
-        public MQClient(string ip, int port, Guid appID)
+        public MessageQueueClient(string ip, int port, Guid appID)
         {
-            this.ip = ip;
-            this.port = port;
-            this.appID = appID;
+            AppID = appID;
+            Connect(ip, port);
         }
 
-        public bool Subscribe(Topic topic)
+        public bool IsConnected()
         {
-            try
-            {
-                // Crear la petición en formato: "Subscribe|AppID|Tema"
-                string peticion = $"Subscribe|{appID}|{topic.Nombre}";
-
-                // Enviar la petición al MQBroker
-                string respuesta = EnviarPeticion(peticion);
-
-                // Verificar la respuesta
-                return respuesta == "Subscribed";
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al suscribirse: {ex.Message}");
-                return false;
-            }
+            return _tcpClient?.Client != null &&
+                   _tcpClient.Client.Connected &&
+                   _tcpClient.Client.Poll(100, SelectMode.SelectRead);
         }
 
-        public bool Unsubscribe(Topic topic)
+        private void Connect(string ip, int port, int timeout = 5000)
         {
+            _tcpClient = new TcpClient();
             try
             {
-                // Crear la petición en formato: "Unsubscribe|AppID|Tema"
-                string peticion = $"Unsubscribe|{appID}|{topic.Nombre}";
+                var result = _tcpClient.BeginConnect(ip, port, null, null);
+                if (!result.AsyncWaitHandle.WaitOne(timeout))
+                    throw new TimeoutException("Tiempo de conexión agotado");
 
-                // Enviar la petición al MQBroker
-                string respuesta = EnviarPeticion(peticion);
-
-                // Verificar la respuesta
-                return respuesta == "Unsubscribed";
+                NetworkStream stream = _tcpClient.GetStream();
+                _reader = new StreamReader(stream, Encoding.UTF8);
+                _writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Error al desuscribirse: {ex.Message}");
-                return false;
+                Dispose();
+                throw;
             }
         }
 
-        public bool Publish(Message message, Topic topic)
+        public string SendRequest(string request)
         {
-            try
+            lock (_lock)
             {
-                // Crear la petición en formato: "Publish|Tema|Contenido"
-                string peticion = $"Publish|{topic.Nombre}|{message.Contenido}";
+                if (_disposed || !(_tcpClient?.Connected ?? false))
 
-                // Enviar la petición al MQBroker
-                string respuesta = EnviarPeticion(peticion);
+                    throw new InvalidOperationException("Cliente no conectado o ya cerrado");
 
-                // Verificar la respuesta
-                return respuesta == "Published";
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al publicar: {ex.Message}");
-                return false;
-            }
-        }
-
-        public Message Receive(Topic topic)
-        {
-            try
-            {
-                // Crear la petición en formato: "Receive|AppID|Tema"
-                string peticion = $"Receive|{appID}|{topic.Nombre}";
-
-                // Enviar la petición al MQBroker
-                string respuesta = EnviarPeticion(peticion);
-
-                // Verificar si se recibió un mensaje
-                if (!string.IsNullOrEmpty(respuesta))
+                try
                 {
-                    return new Message(respuesta);
+                    _writer.WriteLine(request);
+                    return _reader.ReadLine() ?? throw new IOException("Respuesta nula del servidor");
                 }
-                else
+                catch (IOException)
                 {
-                    return null;
+                    if (_tcpClient.Client.Poll(1000, SelectMode.SelectRead)) // Verifica si el socket está activo
+                    {
+                        Reconnect();
+                        _writer.WriteLine(request);
+                        return _reader.ReadLine() ?? throw new IOException("Respuesta nula del servidor");
+                    }
+                    throw;
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al recibir mensaje: {ex.Message}");
-                return null;
-            }
         }
 
-        private string EnviarPeticion(string peticion)
+        private void Reconnect()
         {
-            // Crear un socket para conectarse al MQBroker
-            using (TcpClient client = new TcpClient(ip, port))
+            if (_tcpClient.Client.RemoteEndPoint is not System.Net.IPEndPoint remoteEndPoint)
+                throw new InvalidOperationException("No se puede reconectar: endpoint desconocido");
+
+            DisposeResources();
+            Connect(remoteEndPoint.Address.ToString(), remoteEndPoint.Port);
+        }
+
+        private void DisposeResources()
+        {
+            _reader?.Dispose();
+            _writer?.Dispose();
+            _tcpClient?.Dispose();
+        }
+
+        public void Dispose()
+        {
+            lock (_lock)
             {
-                NetworkStream stream = client.GetStream();
-
-                // Enviar la petición al MQBroker
-                byte[] buffer = Encoding.UTF8.GetBytes(peticion);
-                stream.Write(buffer, 0, buffer.Length);
-
-                // Recibir la respuesta del MQBroker
-                buffer = new byte[1024];
-                int bytesRead = stream.Read(buffer, 0, buffer.Length);
-                return Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                if (_disposed) return;
+                _disposed = true;
+                DisposeResources();
             }
         }
     }

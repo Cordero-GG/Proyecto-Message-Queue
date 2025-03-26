@@ -1,119 +1,60 @@
-﻿using System;
+﻿//MQBroker.cs
+using System;
 using System.Collections.Generic;
-using System.Net.Sockets;
 
 namespace MQBroker
 {
     public class MQBroker
     {
-        private MiLista<Tema> temas;
+        private readonly MiLista<Tema> _temas = new MiLista<Tema>();
 
-        public MQBroker()
+        public void Subscribe(Guid appId, string nombreTema)
         {
-            temas = new MiLista<Tema>();
-        }
-
-        public void ManejarCliente(TcpClient client)
-        {
-            // Aquí se procesan las peticiones del cliente (Subscribe, Unsubscribe, Publish, Receive)
-            // Este método debe leer los datos del socket, interpretar la petición y llamar al método correspondiente.
-            // Por simplicidad, este es un esqueleto básico.
-            Console.WriteLine("Procesando petición del cliente...");
-        }
-
-        public void Subscribe(Guid appID, string tema)
-        {
-            // Verificar si el tema ya existe
-            Tema t = BuscarTema(tema);
-            if (t == null)
+            Tema tema = BuscarTema(nombreTema) ?? new Tema(nombreTema);
+            if (!ContieneTema(tema))
             {
-                // Si no existe, crear un nuevo tema
-                t = new Tema(tema);
-                temas.Agregar(t);
-            }
-
-            // Verificar si el AppID ya está suscrito
-            if (!t.ContieneSuscriptor(appID))
-            {
-                // Si no está suscrito, agregarlo
-                t.AgregarSuscriptor(new Suscriptor(appID));
-                Console.WriteLine($"AppID {appID} suscrito al tema {tema}.");
-            }
-            else
-            {
-                Console.WriteLine($"AppID {appID} ya está suscrito al tema {tema}.");
+                tema.AgregarSuscriptor(new Suscriptor(appId));
+                if (!ContieneTema(tema))
+                    _temas.Agregar(tema);
             }
         }
 
-        public void Unsubscribe(Guid appID, string tema)
+        public void Unsubscribe(Guid appId, string nombreTema)
         {
-            // Buscar el tema
-            Tema t = BuscarTema(tema);
-            if (t != null)
-            {
-                // Eliminar el suscriptor
-                t.EliminarSuscriptor(appID);
-                Console.WriteLine($"AppID {appID} eliminado del tema {tema}.");
-            }
-            else
-            {
-                Console.WriteLine($"Tema {tema} no encontrado.");
-            }
+            Tema? tema = BuscarTema(nombreTema);
+            tema?.EliminarSuscriptor(appId);
         }
 
-        public void Publish(string tema, string contenido)
+        public void Publish(string nombreTema, string contenido)
         {
-            // Buscar el tema
-            Tema t = BuscarTema(tema);
-            if (t != null)
-            {
-                // Publicar el mensaje a todos los suscriptores
-                t.PublicarMensaje(contenido);
-                Console.WriteLine($"Mensaje publicado en el tema {tema}.");
-            }
-            else
-            {
-                Console.WriteLine($"Tema {tema} no encontrado.");
-            }
+            Tema? tema = BuscarTema(nombreTema);
+            tema?.PublicarMensaje(contenido);
         }
 
-        public string? Receive(Guid appID, string tema)
+        public string Receive(Guid appId, string nombreTema)
         {
-            // Buscar el tema
-            Tema t = BuscarTema(tema);
-            if (t != null)
-            {
-                // Obtener el mensaje para el suscriptor
-                string mensaje = t.ObtenerMensaje(appID);
-                if (mensaje != null)
-                {
-                    Console.WriteLine($"Mensaje entregado a AppID {appID} en el tema {tema}.");
-                    return mensaje;
-                }
-                else
-                {
-                    Console.WriteLine($"No hay mensajes para AppID {appID} en el tema {tema}.");
-                    return null;
-                }
-            }
-            else
-            {
-                Console.WriteLine($"Tema {tema} no encontrado.");
-                return null;
-            }
+            Tema? tema = BuscarTema(nombreTema);
+            return tema?.ObtenerMensaje(appId) ?? "ERROR|Tema no encontrado";
         }
 
         private Tema? BuscarTema(string nombre)
         {
-            // Buscar un tema por nombre
-            for (int i = 0; i < temas.Count; i++)
+            for (int i = 0; i < _temas.Count; i++)
             {
-                if (temas.Obtener(i).Nombre == nombre)
-                {
-                    return temas.Obtener(i);
-                }
+                if (_temas.Obtener(i).Nombre == nombre)
+                    return _temas.Obtener(i);
             }
             return null;
+        }
+
+        private bool ContieneTema(Tema tema)
+        {
+            for (int i = 0; i < _temas.Count; i++)
+            {
+                if (_temas.Obtener(i).Nombre == tema.Nombre)
+                    return true;
+            }
+            return false;
         }
     }
 }
