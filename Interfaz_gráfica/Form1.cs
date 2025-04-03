@@ -94,7 +94,7 @@ namespace Interfaz_gráfica
             }
         }
 
-        // Método para recibir mensajes reales del servidor (en lugar de simular)
+        // Método para recibir mensajes reales del servidor 
         private void button4_Click(object sender, EventArgs e)
         {
             try

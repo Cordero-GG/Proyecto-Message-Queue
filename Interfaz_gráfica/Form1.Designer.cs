@@ -17,6 +17,7 @@ namespace Interfaz_gráfica
         private TextBox textBox1;
         private TextBox textBox2;
         private TextBox textBox3;
+        private Button btnConectar;
         private Button button1;       // SUBSCRIBE
         private Button button2;       // UNSUBSCRIBE
         private Label label2;
@@ -45,6 +46,7 @@ namespace Interfaz_gráfica
             textBox1 = new TextBox();
             textBox2 = new TextBox();
             textBox3 = new TextBox();
+            btnConectar = new Button();
             button1 = new Button();
             button2 = new Button();
             label2 = new Label();
@@ -59,6 +61,18 @@ namespace Interfaz_gráfica
             button4 = new Button();
             textBox6 = new TextBox();
             SuspendLayout();
+
+            // btnConectar
+            btnConectar = new Button();
+            btnConectar.Location = new System.Drawing.Point(35, 300); // Ajusta la posición según convenga
+            btnConectar.Name = "btnConectar";
+            btnConectar.Size = new System.Drawing.Size(163, 36);
+            btnConectar.TabIndex = 24; // Asegúrate de asignar un índice de tabulación adecuado
+            btnConectar.Text = "Conectar";
+            btnConectar.UseVisualStyleBackColor = true;
+            btnConectar.Click += new System.EventHandler(this.btnConectar_Click);
+            this.Controls.Add(btnConectar);
+
             // 
             // Label_IP
             // 
@@ -312,6 +326,7 @@ namespace Interfaz_gráfica
             this.Controls.Add(button3);
             this.Controls.Add(textBox4);
             this.Controls.Add(label2);
+            this.Controls.Add(btnConectar);
             this.Controls.Add(button2);
             this.Controls.Add(button1);
             this.Controls.Add(textBox3);
