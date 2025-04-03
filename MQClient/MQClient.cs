@@ -20,19 +20,31 @@ namespace MQClient
         public MessageQueueClient(string ip, int port, Guid appID)
         {
             AppID = appID;
-            _tcpClient = new TcpClient(); // Initialize _tcpClient
-            Connect(ip, port);
-            if (_tcpClient.Connected)
+            try
             {
-                NetworkStream stream = _tcpClient.GetStream();
-                _reader = new StreamReader(stream, Encoding.UTF8);
-                _writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+                Console.WriteLine($"Intentando conectar a {ip}:{port}...");
+                _tcpClient = new TcpClient();
+                Connect(ip, port);
+
+                if (_tcpClient.Connected)
+                {
+                    Console.WriteLine("Conexión establecida con el servidor.");
+                    NetworkStream stream = _tcpClient.GetStream();
+                    _reader = new StreamReader(stream, Encoding.UTF8);
+                    _writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+                }
+                else
+                {
+                    throw new InvalidOperationException("No se pudo conectar al servidor");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                throw new InvalidOperationException("No se pudo conectar al servidor");
+                Console.WriteLine($"Error al conectar: {ex.Message}");
+                throw;
             }
         }
+
 
         public bool IsConnected()
         {
@@ -74,18 +86,15 @@ namespace MQClient
                     _writer.WriteLine(request);
                     return _reader.ReadLine() ?? throw new IOException("Respuesta nula del servidor");
                 }
-                catch (IOException)
+                catch (IOException ex)
                 {
-                    if (_tcpClient.Client.Poll(1000, SelectMode.SelectRead)) // Verifica si el socket está activo
-                    {
-                        Reconnect();
-                        _writer.WriteLine(request);
-                        return _reader.ReadLine() ?? throw new IOException("Respuesta nula del servidor");
-                    }
-                    throw;
+                    Console.WriteLine($"Error en comunicación con el servidor: {ex.Message}");
+                    return "ERROR|Servidor no disponible";
                 }
+
             }
         }
+        
 
         private void Reconnect()
         {

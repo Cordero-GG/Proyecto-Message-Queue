@@ -30,11 +30,15 @@ namespace MQBroker
 
                 while (true)
                 {
-                    Console.WriteLine("Esperando conexiones...");
                     TcpClient client = await server.AcceptTcpClientAsync();
                     Console.WriteLine("Cliente conectado.");
-                    _ = Task.Run(() => ManejarCliente(broker, client));
+                    _ = Task.Run(async () =>
+                    {
+                        try { await ManejarCliente(broker, client); }
+                        catch (Exception ex) { Console.WriteLine($"Error en cliente: {ex.Message}"); }
+                    });
                 }
+
             }
             catch (Exception ex)
             {
@@ -93,7 +97,8 @@ namespace MQBroker
                         return "OK|Published";
                     case "Receive":
                         string mensaje = broker.Receive(Guid.Parse(partes[1]), partes[2]);
-                        return $"OK|{mensaje}";
+                        return string.IsNullOrEmpty(mensaje) ? "INFO|No hay mensajes nuevos" : $"OK|{mensaje}";
+
                     default:
                         return "ERROR|Comando inválido";
                 }
