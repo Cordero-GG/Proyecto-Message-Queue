@@ -1,7 +1,6 @@
 ﻿// MQClient.cs - Versión corregida
 using System;
 using System.IO;
-using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -15,7 +14,7 @@ namespace MQClient
         private StreamWriter _writer;
         private readonly object _lock = new();
         private bool _disposed = false;
-        public Guid AppID { get; } // Añadido para almacenar el AppID
+        public Guid AppID { get; }
 
         public MessageQueueClient(string ip, int port, Guid appID)
         {
@@ -31,7 +30,8 @@ namespace MQClient
                     Console.WriteLine("Conexión establecida con el servidor.");
                     NetworkStream stream = _tcpClient.GetStream();
                     _reader = new StreamReader(stream, Encoding.UTF8);
-                    _writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
+                    _writer = new StreamWriter(stream, new UTF8Encoding(false)) { AutoFlush = true };
+
                 }
                 else
                 {
@@ -44,7 +44,6 @@ namespace MQClient
                 throw;
             }
         }
-
 
         public bool IsConnected()
         {
@@ -73,16 +72,18 @@ namespace MQClient
             }
         }
 
-        public string SendRequest(string request)
+        public string SendRequest(string command)
         {
             lock (_lock)
             {
                 if (_disposed || !(_tcpClient?.Connected ?? false))
-
                     throw new InvalidOperationException("Cliente no conectado o ya cerrado");
 
                 try
                 {
+                    
+                    string request = command.Trim();
+
                     _writer.WriteLine(request);
                     return _reader.ReadLine() ?? throw new IOException("Respuesta nula del servidor");
                 }
@@ -91,18 +92,7 @@ namespace MQClient
                     Console.WriteLine($"Error en comunicación con el servidor: {ex.Message}");
                     return "ERROR|Servidor no disponible";
                 }
-
             }
-        }
-        
-
-        private void Reconnect()
-        {
-            if (_tcpClient.Client.RemoteEndPoint is not System.Net.IPEndPoint remoteEndPoint)
-                throw new InvalidOperationException("No se puede reconectar: endpoint desconocido");
-
-            DisposeResources();
-            Connect(remoteEndPoint.Address.ToString(), remoteEndPoint.Port);
         }
 
         private void DisposeResources()

@@ -42,13 +42,30 @@ namespace Interfaz_gráfica
                 string tema = textBox3.Text;
                 string response = _mqClient.SendRequest($"Subscribe|{_mqClient.AppID}|{tema}");
                 MessageBox.Show(response.Contains("OK") ? "Suscrito" : "Error: " + response);
-                ActualizarListBoxTemas();
+                if (response.Contains("OK"))
+                {
+                    ActualizarListBoxTemas(tema);
+                }
+
+
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error: {ex.Message}");
             }
         }
+        private void ActualizarListBoxTemas(string nuevoTema)
+        {
+            if (string.IsNullOrWhiteSpace(nuevoTema))
+                return;
+
+            if (!listBox2.Items.Contains(nuevoTema))
+            {
+                listBox2.Items.Add(nuevoTema);
+            }
+        }
+
+
 
         // Método para desuscribirse de un tema
         private void button2_Click(object sender, EventArgs e)
@@ -63,7 +80,8 @@ namespace Interfaz_gráfica
 
                 string response = _mqClient.SendRequest($"Unsubscribe|{_mqClient.AppID}|{textBox3.Text}");
                 MessageBox.Show(response.Contains("OK") ? "Desuscrito" : "Error: " + response);
-                ActualizarListBoxTemas();
+                listBox2.Items.Remove(textBox3.Text);
+
             }
             catch (Exception ex)
             {
@@ -82,7 +100,14 @@ namespace Interfaz_gráfica
                     return;
                 }
 
-                string tema = textBox3.Text;
+                string tema = listBox2.SelectedItem?.ToString();
+
+                if (string.IsNullOrEmpty(tema))
+                {
+                    MessageBox.Show("Selecciona un tema de la lista.");
+                    return;
+                }
+
                 string contenido = textBox5.Text;
                 string response = _mqClient.SendRequest($"Publish|{tema}|{contenido}");
                 bool publicado = response.Contains("OK");
@@ -130,14 +155,8 @@ namespace Interfaz_gráfica
             }
         }
 
-        // Actualiza la lista de temas en el ListBox (aquí se puede adaptar para obtener datos reales del servidor)
-        private void ActualizarListBoxTemas()
-        {
-            listBox2.Items.Clear();
-            // Ejemplo ficticio; en un escenario real, se actualizaría con datos del servidor
-            listBox2.Items.Add("Tema1");
-            listBox2.Items.Add("Tema2");
-        }
+        
+
 
         // Al cerrar el formulario, se libera la conexión
         protected override void OnFormClosing(FormClosingEventArgs e)
