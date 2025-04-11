@@ -1,4 +1,4 @@
-﻿// MQClient.cs 
+﻿// Archivo: MQClient.cs
 using System;
 using System.IO;
 using System.Net.Sockets;
@@ -14,7 +14,7 @@ namespace MQClient
         private StreamWriter _writer;
         private readonly object _lock = new();
         private bool _disposed = false;
-        public Guid AppID { get; }
+        public Guid AppID { get; private set; }
 
         public MessageQueueClient(string ip, int port, Guid appID)
         {
@@ -43,6 +43,11 @@ namespace MQClient
                 Console.WriteLine($"Error al conectar: {ex.Message}");
                 throw;
             }
+        }
+
+        public void SetAppId(Guid newAppId)
+        {
+            AppID = newAppId;
         }
 
         public bool IsConnected()
@@ -81,9 +86,7 @@ namespace MQClient
 
                 try
                 {
-                    
                     string request = command.Trim();
-
                     _writer.WriteLine(request);
                     return _reader.ReadLine() ?? throw new IOException("Respuesta nula del servidor");
                 }

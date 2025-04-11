@@ -9,6 +9,16 @@ namespace MQBroker
 {
     class Program
     {
+        
+        static bool ActualizarSuscriptor(Guid antiguoAppID, Guid nuevoAppID)
+        {
+            // Implementación básica de ejemplo
+            // Aquí puedes agregar la lógica para actualizar el suscriptor en el broker
+            Console.WriteLine($"Actualizando suscriptor de {antiguoAppID} a {nuevoAppID}");
+            return true; // Devuelve true si la actualización fue exitosa
+        }
+
+
         static async Task Main(string[] args)
         {
             if (args.Length < 2)
@@ -99,6 +109,15 @@ namespace MQBroker
                     case "Receive":
                         string mensaje = broker.Receive(Guid.Parse(partes[1]), partes[2]);
                         return string.IsNullOrEmpty(mensaje) ? "INFO|No hay mensajes nuevos" : $"OK|{mensaje}";
+
+                    case "ChangeUser":
+                        // Se espera dos parámetros: el antiguo AppID y el nuevo AppID
+                        Guid antiguoAppID = Guid.Parse(partes[1]);
+                        Guid nuevoAppID = Guid.Parse(partes[2]);
+                        // Implementa la lógica para actualizar el suscriptor:
+                        bool actualizado = ActualizarSuscriptor(antiguoAppID, nuevoAppID);
+                        return actualizado ? "OK|Usuario actualizado" : "ERROR|No se pudo actualizar el usuario";
+
 
                     default:
                         return "ERROR|Comando inválido";

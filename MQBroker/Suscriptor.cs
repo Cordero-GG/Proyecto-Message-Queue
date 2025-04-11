@@ -9,7 +9,13 @@ namespace MQBroker
 {
     public class Suscriptor
     {
-        public Guid AppID { get; }
+        public Guid AppID { get; private set; }
+
+        public void ActualizarAppID(Guid nuevoAppID)
+        {
+            AppID = nuevoAppID;
+        }
+
         private MiCola<string> colaMensajes;
 
         public Suscriptor(Guid appID)

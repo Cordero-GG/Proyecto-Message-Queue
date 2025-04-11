@@ -12,6 +12,26 @@ namespace Interfaz_gráfica
             InitializeComponent();
         }
 
+        private void btnCambiarUsuario_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (_mqClient == null)
+                {
+                    MessageBox.Show("Primero debes conectarte al servidor.");
+                    return;
+                }
+                Guid nuevoAppID = Guid.Parse(textBox2.Text); // Asumiendo que textBox2 contiene el nuevo AppID deseado
+                _mqClient.SetAppId(nuevoAppID);
+                MessageBox.Show("Usuario actualizado correctamente.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al actualizar el usuario: {ex.Message}");
+            }
+        }
+
+
         // Método para conectarse al MQBroker usando MQClient
         // Los valores de IP y puerto se obtienen de los controles de la interfaz (con valores por defecto 127.0.0.1 y 5000)
         private void btnConectar_Click(object sender, EventArgs e)
