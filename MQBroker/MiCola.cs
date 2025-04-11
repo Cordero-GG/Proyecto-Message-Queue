@@ -1,4 +1,5 @@
-﻿namespace MQBroker
+﻿//MiCola.cs
+namespace MQBroker
 {
     public class MiCola<T>
     {

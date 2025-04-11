@@ -1,4 +1,5 @@
-﻿namespace MQBroker
+﻿//MiLista.cs
+namespace MQBroker
 {
     public class MiLista<T>
     {

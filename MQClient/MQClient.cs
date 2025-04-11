@@ -1,4 +1,4 @@
-﻿// MQClient.cs - Versión corregida
+﻿// MQClient.cs 
 using System;
 using System.IO;
 using System.Net.Sockets;

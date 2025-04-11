@@ -1,4 +1,5 @@
-﻿namespace MQBroker
+﻿//Message.cs
+namespace MQBroker
 {
     public class Message
     {

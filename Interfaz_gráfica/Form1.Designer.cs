@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿//Form1.Designer.cs
+using System.Windows.Forms;
 using MQClient; // Asegúrate de usar el espacio de nombres correcto
 
 namespace Interfaz_gráfica
